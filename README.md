@@ -2,4 +2,4 @@
 
 
 connection string:
-Server=localhost\\SQLEXPRESS;Database=CoursedotDb;Trusted_Connection=True;
+Server=localhost\\SQLEXPRESS;Database=admin-db;Trusted_Connection=True;
