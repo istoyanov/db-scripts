@@ -1,4 +1,4 @@
-﻿IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
 BEGIN
     CREATE TABLE [__EFMigrationsHistory] (
         [MigrationId] nvarchar(150) NOT NULL,
@@ -14,6 +14,7 @@ GO
 CREATE TABLE [Address] (
     [Id] int NOT NULL IDENTITY,
     [CountryId] int NOT NULL,
+    [CountryCode] nvarchar(max) NOT NULL,
     [City] nvarchar(max) NULL,
     [CityLatin] nvarchar(max) NULL,
     [PostalCode] nvarchar(max) NULL,
@@ -25,34 +26,45 @@ CREATE TABLE [Address] (
 );
 GO
 
-CREATE TABLE [Invoices] (
+CREATE TABLE [SalesDocuments] (
     [Id] int NOT NULL IDENTITY,
-    [TypeId] int NOT NULL,
+    [ClientId] int NOT NULL,
+    [ClientUic] nvarchar(max) NULL,
+    [ClientName] nvarchar(max) NULL,
+    [ClientResponsiblePerson] nvarchar(max) NULL,
+    [ClientVatNumber] nvarchar(max) NULL,
+    [ClientCountryId] int NULL,
+    [ClientCity] nvarchar(max) NULL,
+    [ClientPostalCode] nvarchar(max) NULL,
+    [ClientAddressLine1] nvarchar(max) NULL,
+    [ClientAddressLine2] nvarchar(max) NULL,
+    [CompanyId] int NOT NULL,
+    [CompanyUic] nvarchar(max) NULL,
+    [CompanyName] nvarchar(max) NULL,
+    [CompanyResponsiblePerson] nvarchar(max) NULL,
+    [CompanyVatNumber] nvarchar(max) NULL,
+    [CompanyCountryId] int NULL,
+    [CompanyCity] nvarchar(max) NULL,
+    [CompanyPostalCode] nvarchar(max) NULL,
+    [CompanyAddressLine1] nvarchar(max) NULL,
+    [CompanyAddressLine2] nvarchar(max) NULL,
+    [TypeCode] nvarchar(max) NOT NULL,
+    [ParentId] int NULL,
+    [Number] int NOT NULL,
     [LanguageCode] nvarchar(max) NOT NULL,
     [DateOfIssue] datetime2 NOT NULL,
     [DateOfTaxEvent] datetime2 NOT NULL,
+    [DueDate] datetime2 NOT NULL,
     [PlaceOfTransaction] nvarchar(max) NOT NULL,
+    [Recipient] nvarchar(max) NOT NULL,
+    [Notes] nvarchar(max) NULL,
+    [CurrencyCode] nvarchar(max) NOT NULL,
+    [TotalVatAmount] decimal(18,4) NULL,
+    [TotalAmountWithoutVat] decimal(18,4) NULL,
+    [TotalAmountWithVat] decimal(18,4) NULL,
     [CreatedAt] datetime2 NOT NULL,
     [UpdatedAt] datetime2 NULL,
-    [RecipientUic] nvarchar(max) NULL,
-    [RecipientName] nvarchar(max) NULL,
-    [RecipientResponsiblePerson] nvarchar(max) NULL,
-    [RecipientVatNumber] nvarchar(max) NULL,
-    [RecipientCountryId] int NULL,
-    [RecipientCity] nvarchar(max) NULL,
-    [RecipientPostalCode] nvarchar(max) NULL,
-    [RecipientAddressLine1] nvarchar(max) NULL,
-    [RecipientAddressLine2] nvarchar(max) NULL,
-    [SupplierUic] nvarchar(max) NULL,
-    [SupplierName] nvarchar(max) NULL,
-    [SupplierResponsiblePerson] nvarchar(max) NULL,
-    [SupplierVatNumber] nvarchar(max) NULL,
-    [SupplierCountryId] int NULL,
-    [SupplierCity] nvarchar(max) NULL,
-    [SupplierPostalCode] nvarchar(max) NULL,
-    [SupplierAddressLine1] nvarchar(max) NULL,
-    [SupplierAddressLine2] nvarchar(max) NULL,
-    CONSTRAINT [PK_Invoices] PRIMARY KEY ([Id])
+    CONSTRAINT [PK_SalesDocuments] PRIMARY KEY ([Id])
 );
 GO
 
@@ -66,10 +78,10 @@ CREATE TABLE [Contrahents] (
     [ResponsiblePerson] nvarchar(max) NULL,
     [ResponsiblePersonLatin] nvarchar(max) NULL,
     [DelayedPayment] int NULL,
-    [Discount] decimal(18,2) NULL,
-    [VatInvoice] decimal(18,2) NULL,
+    [DefaultCurrencyCode] nvarchar(max) NULL,
     [AddressId] int NOT NULL,
     [Notes] nvarchar(max) NULL,
+    [StatusId] int NOT NULL,
     [CreatedAt] datetime2 NOT NULL,
     [UpdatedAt] datetime2 NULL,
     CONSTRAINT [PK_Contrahents] PRIMARY KEY ([Id]),
@@ -77,22 +89,32 @@ CREATE TABLE [Contrahents] (
 );
 GO
 
-CREATE TABLE [BankAccount] (
+CREATE TABLE [SalesDocumentItem] (
     [Id] int NOT NULL IDENTITY,
-    [Iban] nvarchar(max) NOT NULL,
-    [BicCode] nvarchar(max) NOT NULL,
-    [ContrahentId] int NULL,
-    CONSTRAINT [PK_BankAccount] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_BankAccount_Contrahents_ContrahentId] FOREIGN KEY ([ContrahentId]) REFERENCES [Contrahents] ([Id])
+    [SalesDocumentId] int NOT NULL,
+    [LineNumber] int NOT NULL,
+    [ItemNumber] nvarchar(max) NULL,
+    [Description] nvarchar(max) NULL,
+    [UnitOfMeasureCode] nvarchar(max) NULL,
+    [Quantity] int NOT NULL,
+    [UnitPrice] decimal(18,4) NOT NULL,
+    [Discount] decimal(4,2) NULL,
+    [Type] nvarchar(max) NULL,
+    [TaxRate] decimal(4,2) NULL,
+    [VatAmount] decimal(18,4) NULL,
+    [AmountWithoutVat] decimal(18,4) NULL,
+    [AmountWithVat] decimal(18,4) NULL,
+    CONSTRAINT [PK_SalesDocumentItem] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_SalesDocumentItem_SalesDocuments_SalesDocumentId] FOREIGN KEY ([SalesDocumentId]) REFERENCES [SalesDocuments] ([Id]) ON DELETE CASCADE
 );
 GO
 
-CREATE TABLE [Clients] (
+CREATE TABLE [Companies] (
     [Id] int NOT NULL IDENTITY,
     [ContrahentId] int NOT NULL,
     [StatusId] int NOT NULL,
-    CONSTRAINT [PK_Clients] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Clients_Contrahents_ContrahentId] FOREIGN KEY ([ContrahentId]) REFERENCES [Contrahents] ([Id]) ON DELETE CASCADE
+    CONSTRAINT [PK_Companies] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Companies_Contrahents_ContrahentId] FOREIGN KEY ([ContrahentId]) REFERENCES [Contrahents] ([Id]) ON DELETE CASCADE
 );
 GO
 
@@ -108,6 +130,7 @@ CREATE TABLE [Contacts] (
     [Phone] nvarchar(max) NOT NULL,
     [Email] nvarchar(max) NOT NULL,
     [AddressId] int NOT NULL,
+    [StatusId] int NOT NULL,
     [CreatedAt] datetime2 NOT NULL,
     [UpdatedAt] datetime2 NULL,
     CONSTRAINT [PK_Contacts] PRIMARY KEY ([Id]),
@@ -123,12 +146,13 @@ CREATE TABLE [Contracts] (
     [CategoryId] int NOT NULL,
     [Subject] nvarchar(max) NOT NULL,
     [SubjectLatin] nvarchar(max) NOT NULL,
-    [Budget] decimal(18,2) NULL,
+    [Budget] decimal(18,4) NULL,
     [TypeId] int NOT NULL,
     [StartDate] datetime2 NULL,
     [EndDate] datetime2 NULL,
     [DelayedPayment] int NOT NULL,
-    [Amount] decimal(18,2) NULL,
+    [Amount] decimal(18,4) NULL,
+    [StatusId] int NOT NULL,
     [CreatedAt] datetime2 NOT NULL,
     [UpdatedAt] datetime2 NULL,
     CONSTRAINT [PK_Contracts] PRIMARY KEY ([Id]),
@@ -136,19 +160,38 @@ CREATE TABLE [Contracts] (
 );
 GO
 
-CREATE TABLE [Suppliers] (
+CREATE TABLE [ContrahentBankAccount] (
     [Id] int NOT NULL IDENTITY,
     [ContrahentId] int NOT NULL,
-    [StatusId] int NOT NULL,
-    CONSTRAINT [PK_Suppliers] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Suppliers_Contrahents_ContrahentId] FOREIGN KEY ([ContrahentId]) REFERENCES [Contrahents] ([Id]) ON DELETE CASCADE
+    [Name] nvarchar(max) NOT NULL,
+    [BankName] nvarchar(max) NOT NULL,
+    [Iban] nvarchar(max) NOT NULL,
+    [BicCode] nvarchar(max) NOT NULL,
+    [IsDefault] bit NOT NULL,
+    CONSTRAINT [PK_ContrahentBankAccount] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_ContrahentBankAccount_Contrahents_ContrahentId] FOREIGN KEY ([ContrahentId]) REFERENCES [Contrahents] ([Id]) ON DELETE CASCADE
 );
 GO
 
-CREATE INDEX [IX_BankAccount_ContrahentId] ON [BankAccount] ([ContrahentId]);
+CREATE TABLE [ContrahentDiscount] (
+    [Id] int NOT NULL IDENTITY,
+    [ContrahentId] int NOT NULL,
+    [Discount] decimal(4,2) NOT NULL,
+    CONSTRAINT [PK_ContrahentDiscount] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_ContrahentDiscount_Contrahents_ContrahentId] FOREIGN KEY ([ContrahentId]) REFERENCES [Contrahents] ([Id]) ON DELETE CASCADE
+);
 GO
 
-CREATE INDEX [IX_Clients_ContrahentId] ON [Clients] ([ContrahentId]);
+CREATE TABLE [ContrahentVatInvoice] (
+    [Id] int NOT NULL IDENTITY,
+    [ContrahentId] int NOT NULL,
+    [VatInvoice] decimal(4,2) NOT NULL,
+    CONSTRAINT [PK_ContrahentVatInvoice] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_ContrahentVatInvoice_Contrahents_ContrahentId] FOREIGN KEY ([ContrahentId]) REFERENCES [Contrahents] ([Id]) ON DELETE CASCADE
+);
+GO
+
+CREATE INDEX [IX_Companies_ContrahentId] ON [Companies] ([ContrahentId]);
 GO
 
 CREATE INDEX [IX_Contacts_AddressId] ON [Contacts] ([AddressId]);
@@ -160,168 +203,25 @@ GO
 CREATE INDEX [IX_Contracts_ContrahentId] ON [Contracts] ([ContrahentId]);
 GO
 
+CREATE INDEX [IX_ContrahentBankAccount_ContrahentId] ON [ContrahentBankAccount] ([ContrahentId]);
+GO
+
+CREATE INDEX [IX_ContrahentDiscount_ContrahentId] ON [ContrahentDiscount] ([ContrahentId]);
+GO
+
 CREATE INDEX [IX_Contrahents_AddressId] ON [Contrahents] ([AddressId]);
 GO
 
-CREATE INDEX [IX_Suppliers_ContrahentId] ON [Suppliers] ([ContrahentId]);
+CREATE INDEX [IX_ContrahentVatInvoice_ContrahentId] ON [ContrahentVatInvoice] ([ContrahentId]);
+GO
+
+CREATE INDEX [IX_SalesDocumentItem_SalesDocumentId] ON [SalesDocumentItem] ([SalesDocumentId]);
 GO
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20221213141352_InitialCreate', N'7.0.0');
+VALUES (N'20230209161631_InitialCreate', N'7.0.0');
 GO
 
 COMMIT;
 GO
 
-BEGIN TRANSACTION;
-GO
-
-ALTER TABLE [Contracts] ADD [StatusId] int NOT NULL DEFAULT 0;
-GO
-
-ALTER TABLE [Contacts] ADD [StatusId] int NOT NULL DEFAULT 0;
-GO
-
-INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20221216075352_AddStatusColumnToCantactAndContractsTables', N'7.0.0');
-GO
-
-COMMIT;
-GO
-
-BEGIN TRANSACTION;
-GO
-
-CREATE TABLE [InvoiceItem] (
-    [Id] int NOT NULL IDENTITY,
-    [InvoiceId] int NOT NULL,
-    [LineNumber] int NOT NULL,
-    [ItemNumber] nvarchar(max) NULL,
-    [Description] nvarchar(max) NULL,
-    [UnitOfMeasure] nvarchar(max) NULL,
-    [Quantity] int NOT NULL,
-    [UnitPrice] decimal(18,2) NOT NULL,
-    [Discount] decimal(18,2) NULL,
-    [Account] nvarchar(max) NULL,
-    [TaxRate] decimal(18,2) NULL,
-    [VatAmount] decimal(18,2) NULL,
-    [AmountWithoutVat] decimal(18,2) NULL,
-    CONSTRAINT [PK_InvoiceItem] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_InvoiceItem_Invoices_InvoiceId] FOREIGN KEY ([InvoiceId]) REFERENCES [Invoices] ([Id]) ON DELETE CASCADE
-);
-GO
-
-CREATE INDEX [IX_InvoiceItem_InvoiceId] ON [InvoiceItem] ([InvoiceId]);
-GO
-
-INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20221218232433_AddInvoiceItemTable', N'7.0.0');
-GO
-
-COMMIT;
-GO
-
-BEGIN TRANSACTION;
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierVatNumber]', N'CompanyVatNumber', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierUic]', N'CompanyUic', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierResponsiblePerson]', N'CompanyResponsiblePerson', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierPostalCode]', N'CompanyPostalCode', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierName]', N'CompanyName', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierCountryId]', N'CompanyCountryId', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierCity]', N'CompanyCity', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierAddressLine2]', N'CompanyAddressLine2', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[SupplierAddressLine1]', N'CompanyAddressLine1', N'COLUMN';
-GO
-
-CREATE TABLE [Companies] (
-    [Id] int NOT NULL IDENTITY,
-    [ContrahentId] int NOT NULL,
-    [StatusId] int NOT NULL,
-    CONSTRAINT [PK_Companies] PRIMARY KEY ([Id]),
-    CONSTRAINT [FK_Companies_Contrahents_ContrahentId] FOREIGN KEY ([ContrahentId]) REFERENCES [Contrahents] ([Id]) ON DELETE CASCADE
-);
-GO
-
-CREATE INDEX [IX_Companies_ContrahentId] ON [Companies] ([ContrahentId]);
-GO
-
-INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20230102141851_AddCompanyTable', N'7.0.0');
-GO
-
-COMMIT;
-GO
-
-BEGIN TRANSACTION;
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientVatNumber]', N'ClientVatNumber', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientUic]', N'ClientUic', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientResponsiblePerson]', N'ClientResponsiblePerson', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientPostalCode]', N'ClientPostalCode', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientName]', N'ClientName', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientCountryId]', N'ClientCountryId', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientCity]', N'ClientCity', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientAddressLine2]', N'ClientAddressLine2', N'COLUMN';
-GO
-
-EXEC sp_rename N'[Invoices].[RecipientAddressLine1]', N'ClientAddressLine1', N'COLUMN';
-GO
-
-ALTER TABLE [Invoices] ADD [ClientId] int NOT NULL DEFAULT 0;
-GO
-
-ALTER TABLE [Invoices] ADD [CompanyId] int NOT NULL DEFAULT 0;
-GO
-
-INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20230102143252_RanameInvoiceClientColumns', N'7.0.0');
-GO
-
-COMMIT;
-GO
-
-BEGIN TRANSACTION;
-GO
-
-ALTER TABLE [Invoices] ADD [Number] int NOT NULL DEFAULT 0;
-GO
-
-INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20230102202231_AddInvoiceNumberColumng', N'7.0.0');
-GO
-
-COMMIT;
-GO
